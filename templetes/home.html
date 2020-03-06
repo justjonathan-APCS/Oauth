@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <p>This is the Home page</p>
+      
+    {% if logged_in %}
+	  <a href="/logout">Logout</a>
+	  {% else %}
+	  <a href="/login">Login</a>
+	  {% endif %}
+      
+	{% if valid_user == True %}
+	  <br>
+	  {% endif %}
+	  
+	{% if Admin == "Admin Privileges" %}  
+    <h2>{{Admin}}</h2>
+      
+	<p>
+     Logged in = {{secretd}}<br>
+      Failed to Login = {{secretd2}}
+    </p>
+	  {% endif %}
+        
+	 </body>
+</html>
