@@ -1,7 +1,8 @@
+Flask
 itsdangerous
 Jinja2
 MarkupSafe
-Werkzeug>=0.14
+Werkzeug
 wheel
 gunicorn
 Flask-OAuthlib
