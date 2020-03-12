@@ -1,13 +1,9 @@
-<!DOCTYPE html>
+{% extends "layout.html" %}
 
-<html>
+{% block title %}Message{% endblock %}
 
-  <body>
-  
-    <p>{{ msg }}</p>
-    
-    <a href="/">Home</a>
-    
-  </body>
-  
-</html>
+{% block content %}
+  <p>{{ message }}</p>
+
+
+{% endblock %}
