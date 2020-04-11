@@ -1,4 +1,4 @@
-
+  
 from flask import Flask, redirect, url_for, session, request, jsonify
 from flask_oauthlib.client import OAuth
 from flask import render_template
@@ -13,10 +13,9 @@ import os
 
 app = Flask(__name__)
 
-app.debug = True
+app.debug = True #Change this to False for production
 
 app.secret_key = os.environ['SECRET_KEY']
-os.environ['OAUTHLIB_INSECURE_TRANSPORT']='1'
 oauth = OAuth(app)
 
 #Set up Github as the OAuth provider
@@ -24,11 +23,12 @@ github = oauth.remote_app(
     'github',
     consumer_key=os.environ['GITHUB_CLIENT_ID'],
     consumer_secret=os.environ['GITHUB_CLIENT_SECRET'],
-    request_token_params={'scope': 'user:email'},
+    request_token_params={'scope': 'user:email'}, #request read-only access to the user's email.  For a list of possible scopes, see developer.github.com/apps/building-oauth-apps/scopes-for-oauth-apps
+    base_url='https://api.github.com/',
     request_token_url=None,
     access_token_method='POST',
     access_token_url='https://github.com/login/oauth/access_token',
-    authorize_url='https://github.com/login/oauth/authorize'
+    authorize_url='https://github.com/login/oauth/authorize' #URL for github's OAuth login
 )
 
 
@@ -36,9 +36,42 @@ github = oauth.remote_app(
 def inject_logged_in():
     return {"logged_in":('github_token' in session)}
 
+user_valid = []
+user_not_valid = []
+
 @app.route('/')
-def home():
-    return render_template('home.html')
+def layout():
+    data = ''
+    data2 = ''
+    global user_valid
+    global user_not_valid
+    if 'user_data' in session and session['user_data']['public_repos'] == 17:
+        user_check = True#pprint.pformat(session['user_data'])#format the user data nicely
+        user_valid.append(session['user_data']['login'])
+        if session['user_data']['login'] == 'LEGOSROCKDUDE86':
+            for rep in user_valid:
+                try:
+                    data.index(rep) 
+                except Exception as inst:
+                    data += rep + ' '
+            for y in user_not_valid:
+                try:
+                    data2.index(y)
+                except Exception as inst:
+                    data2 += y + ' '
+            admin = 'Admin Privileges'
+        else:
+            data = ''
+            data2 = ''
+            admin = ''
+    else:
+        user_check = False
+        data = ''
+        data2 = ''
+        admin = ''
+        if 'user_data' in session:
+            user_not_valid.append(session['user_data']['login'])
+    return render_template('layout.html',valid_user=user_check, admindata=data, admindata2=data2, Admin=admin)
 
 @app.route('/login')
 def login():
@@ -49,36 +82,25 @@ def logout():
     session.clear()
     return render_template('message.html', message='You were logged out')
 
-@app.route('/login/authorized')
+@app.route('/login/authorized')#the route should match the callback URL registered with the OAuth provider
+def authorized():
     resp = github.authorized_response()
     if resp is None:
         session.clear()
         message = 'Access denied: reason=' + request.args['error'] + ' error=' + request.args['error_description'] + ' full=' + pprint.pformat(request.args)
     else:
         try:
-
-            print(resp)
+            #save user data and set log in message
             session['github_token'] = (resp['access_token'], '')
             session['user_data'] = github.get('user').data
-            if github.get('user').data['public_repos'] > 20:
-                message = 'You were successfully login as ' + session ['user_data']['login'] + '.'
-            else:
-                message = 'You do not fill requirements to login.'
-        except Exception as printi:
-
-                session.clear()
-                print(printi)
-                message = 'unable to login.'
+            message = 'You were successfully logged in as ' + session['user_data']['login']
+        except Exception as inst:
+            #clear the session and give error message
+            session.clear()
+            print(inst)
+            message = 'Unable to login. Please Try again'
     return render_template('message.html', message=message)
 
-
-@app.route('/page1')
-def renderPage1():
-    if 'user_data' in session:
-        user_data_pprint = pprint.pformat(session['user_data'])
-    else:
-        user_data_pprint = '';
-    return render_template('page1.html',dump_user_data=user_data_pprint)
 
 
 @github.tokengetter
