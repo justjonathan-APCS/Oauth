@@ -49,28 +49,18 @@ def logout():
     session.clear()
     return render_template('message.html', message='You were logged out')
 
-@app.route('/login/authorized')
+@app.route()
+def authorized():
     resp = github.authorized_response()
     if resp is None:
         session.clear()
-        message = 'Access denied: reason=' + request.args['error'] + ' error=' + request.args['error_description'] + ' full=' + pprint.pformat(request.args)
+        message = 'Access denied: reason=' + request.args['error'] + ' error=' + request.args['error_description'] + ' full=' + pprint.pformat(request.args)      
     else:
         try:
-
-            print(resp)
-            session['github_token'] = (resp['access_token'], '')
-            session['user_data'] = github.get('user').data
-            if github.get('user').data['public_repos'] > 20:
-                message = 'You were successfully login as ' + session ['user_data']['login'] + '.'
-            else:
-                message = 'You do not fill requirements to login.'
-        except Exception as printi:
-
-                session.clear()
-                print(printi)
-                message = 'unable to login.'
+            #save user data and set log in message
+        except Exception as inst:
+            #clear the session and give error message
     return render_template('message.html', message=message)
-
 
 @app.route('/page1')
 def renderPage1():
